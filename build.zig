@@ -2,26 +2,24 @@ const std = @import("std");
 
 
 pub fn build(b: *std.Build) void {
-    const target = b.standardTargetOptions(.{});
+    const target = b.resolveTargetQuery(.{
+        .cpu_arch = .aarch64, 
+        .os_tag = .macos,
+        .os_version_min = .{ .semver = .{ .major = 26, .minor = 0, .patch = 0 } }, 
+    });
     const optimize = b.standardOptimizeOption(.{});
 
-    const exe = b.addExecutable(.{
-        .name = "space-invader",
+    const libz = b.addLibrary(.{
+        .name = "z",
+        .linkage = .static,
         .root_module = b.createModule(.{
-            .root_source_file = b.path("src/main.zig"),
+            .root_source_file = b.path("./libz/math.zig"),
             .target = target,
             .optimize = optimize,
-            .link_libc = true,
         }),
     });
     
-    exe.root_module.linkSystemLibrary("SDL2", .{});
-    b.installArtifact(exe);
-    
-    // Setup run command
-    const run_cmd = b.addRunArtifact(exe);
-    run_cmd.step.dependOn(b.getInstallStep());
-    const run_step = b.step("run", "Run the app");
-    run_step.dependOn(&run_cmd.step);
+    b.installArtifact(libz);
 }
+
 
